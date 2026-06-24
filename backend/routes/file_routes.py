@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import shutil
+import os
 
 from models import (
     ProjectPath, FileNode, FileContent, ListDirectoryRequest,
@@ -16,8 +17,8 @@ router = APIRouter()
 
 @router.get("/api/default-project-path")
 async def get_default_project_path():
-    """Get the default project path (GitHub URL to sample dbt project)."""
-    return {"path": ""}
+    """Default project path/URL prefilled in the open-project input (env-configured)."""
+    return {"path": os.environ.get("DBT_UI__DEFAULT_PROJECT", "")}
 
 
 @router.post("/api/validate-path")
