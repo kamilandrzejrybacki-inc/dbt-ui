@@ -31,11 +31,33 @@ function GitSetupDialog({ onComplete, initialConfig, isEditing }: GitSetupDialog
         // If we have saved config, skip this dialog
         if (config.userName && config.userEmail) {
           onComplete(config)
+          return
         }
       }
     } catch (e) {
       console.error('Failed to load git config:', e)
     }
+
+    // No saved config — derive identity from the Authelia SSO headers the
+    // edge proxy forwards (Remote-Name / Remote-Email). Prefill the form, and
+    // if both are present, persist and skip the dialog entirely.
+    fetch('/api/sso-identity', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((sso: { name?: string; email?: string } | null) => {
+        if (!sso) return
+        if (sso.name) setUserName(sso.name)
+        if (sso.email) setUserEmail(sso.email)
+        if (sso.name && sso.email) {
+          const config: GitConfig = { userName: sso.name, userEmail: sso.email }
+          try {
+            localStorage.setItem(GIT_CONFIG_KEY, JSON.stringify(config))
+          } catch (e) {
+            console.error('Failed to persist git config:', e)
+          }
+          onComplete(config)
+        }
+      })
+      .catch((e) => console.error('SSO identity fetch failed:', e))
   }, [onComplete, isEditing])
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -23,6 +23,17 @@ from utils.subprocess_utils import run_command, run_git_command, git_askpass_env
 
 router = APIRouter()
 
+
+@router.get("/api/sso-identity")
+async def sso_identity(request: Request):
+    """Git identity from reverse-proxy SSO headers (Authelia Remote-Name/Remote-Email,
+    forwarded by the edge Caddy). Returns empty strings when not behind SSO."""
+    return {
+        "name": (request.headers.get("Remote-Name") or "").strip(),
+        "email": (request.headers.get("Remote-Email") or "").strip(),
+    }
+
+
 # Git credentials cookie settings
 GIT_CREDS_COOKIE_PREFIX = "dbt_ui_git_creds_"
 GIT_CREDS_COOKIE_MAX_AGE = int(os.environ.get("DBT_UI__BACKEND_GIT_CREDS_COOKIE_MAX_AGE", 60 * 60 * 24 * 30))  # Default: 30 days
