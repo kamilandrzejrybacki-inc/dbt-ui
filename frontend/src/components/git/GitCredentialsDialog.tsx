@@ -42,6 +42,19 @@ function GitCredentialsDialog({
     return () => clearTimeout(timer)
   }, [initialUsername, hasStoredCredentials])
 
+  // Prefill from the server-side default git credentials (homelab PAT; the UI is
+  // already Authelia-gated to the owner). Only fills blanks — user edits win.
+  useEffect(() => {
+    fetch('/api/git-default-credentials', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c: { username?: string; password?: string } | null) => {
+        if (!c) return
+        setUsername((u) => u || c.username || '')
+        setPassword((p) => p || c.password || '')
+      })
+      .catch(() => {})
+  }, [])
+
   const handleSubmit = () => {
     if (!username || !password) return
     onSubmit(username, password, saveCredentials)

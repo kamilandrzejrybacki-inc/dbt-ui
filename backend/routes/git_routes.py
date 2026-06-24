@@ -34,6 +34,16 @@ async def sso_identity(request: Request):
     }
 
 
+@router.get("/api/git-default-credentials")
+async def git_default_credentials():
+    """Default git credentials (homelab PAT) to prefill the clone/push dialog. Safe to
+    expose to the frontend because the UI is Authelia-gated to the owner."""
+    return {
+        "username": os.environ.get("GIT_DEFAULT_USERNAME", ""),
+        "password": os.environ.get("GIT_DEFAULT_TOKEN", ""),
+    }
+
+
 # Git credentials cookie settings
 GIT_CREDS_COOKIE_PREFIX = "dbt_ui_git_creds_"
 GIT_CREDS_COOKIE_MAX_AGE = int(os.environ.get("DBT_UI__BACKEND_GIT_CREDS_COOKIE_MAX_AGE", 60 * 60 * 24 * 30))  # Default: 30 days
