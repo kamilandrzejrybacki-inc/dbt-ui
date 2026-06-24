@@ -230,8 +230,10 @@ def get_git_file_status(project_path: Path) -> GitFileStatus:
 async def clone_git_repo(git_repo: GitRepoUrl, http_request: Request, response: Response):
     """Clone a Git repository to a local cache directory and return the path."""
     git_url = git_repo.git_url.strip()
-    username = git_repo.username
-    password = git_repo.password
+    # Fall back to server-side default credentials (Authelia already gates the UI,
+    # so a single homelab PAT mounted via env spares the user the credentials prompt).
+    username = git_repo.username or os.environ.get("GIT_DEFAULT_USERNAME", "")
+    password = git_repo.password or os.environ.get("GIT_DEFAULT_TOKEN", "")
 
     # Parse URL to extract repo URL and subdirectory if present
     # GitHub URLs like: https://github.com/user/repo/tree/branch/path/to/dir
@@ -1137,8 +1139,8 @@ async def git_push(request: GitPushPullRequest, http_request: Request, response:
         env = os.environ.copy()
 
         # Get credentials - either from request or stored (if use_stored is true)
-        username = request.username
-        password = request.password
+        username = request.username or os.environ.get("GIT_DEFAULT_USERNAME", "")
+        password = request.password or os.environ.get("GIT_DEFAULT_TOKEN", "")
 
         if request.use_stored:
             # User explicitly requested to use stored credentials
@@ -1249,8 +1251,8 @@ async def git_pull(request: GitPushPullRequest, http_request: Request, response:
         env = os.environ.copy()
 
         # Get credentials - either from request or stored (if use_stored is true)
-        username = request.username
-        password = request.password
+        username = request.username or os.environ.get("GIT_DEFAULT_USERNAME", "")
+        password = request.password or os.environ.get("GIT_DEFAULT_TOKEN", "")
 
         if request.use_stored:
             # User explicitly requested to use stored credentials
